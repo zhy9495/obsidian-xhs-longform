@@ -12,13 +12,15 @@
 
 顶部封面图可以铺满画面，头像可叠在图片与底色的分割线上；标题取当前笔记文件名。
 
-![封面图、头像、标题与正文的导出效果](docs/preview-avatar-cover.png)
+![封面图、头像、标题与正文的导出效果](docs/preview-avatar-cover-v2.png)
 
-### 手写字体与纸张纹理
+### 冷淡黑样式
 
-除了简约黑体，还可以使用本机字体、三款按需下载的 OFL 字体，或者自己导入字体文件。
+下面三张图片均由插件使用“冷淡黑”配色和苹方字体实际渲染，分别展示作者信息、章节排版和列表内容。
 
-![手写字体与纸张纹理的导出效果](docs/preview-handwriting.png)
+| 作者信息 | 章节与引用 | 列表内容 |
+| --- | --- | --- |
+| ![冷淡黑作者信息封面](docs/preview-cool-black-author.png) | ![冷淡黑章节与引用排版](docs/preview-cool-black-chapter.png) | ![冷淡黑列表内容排版](docs/preview-cool-black-details.png) |
 
 ## 这是什么
 

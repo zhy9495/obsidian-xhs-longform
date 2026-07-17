@@ -2,7 +2,7 @@
 
 All notable changes to XHS Longform Exporter are documented here.
 
-## Unreleased
+## 1.2.0 - 2026-07-18
 
 - Replace the three legacy cover modes with independent cover-image, avatar, and title switches, including automatic migration for existing settings.
 - Add local avatar upload, replacement, deletion, centered cropping, and nickname display on the cover only.
@@ -20,6 +20,7 @@ All notable changes to XHS Longform Exporter are documented here.
 - Add adjustable horizontal and top margins and use them in real layout measurement and pagination.
 - Publish a Chinese-first README with cover and handwriting previews.
 - Rewrite the Chinese plugin page around quick start, live-preview controls, cover combinations, use cases, and clearly captioned result images.
+- Add an original editorial cover and matching avatar plus a three-card cold-black README gallery.
 
 ## 1.1.2 - 2026-07-17
 
