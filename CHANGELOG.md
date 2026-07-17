@@ -2,6 +2,10 @@
 
 All notable changes to XHS Longform Exporter are documented here.
 
+## 1.0.2 - 2026-07-17
+
+- Stamp generated release assets with the current version so each release has unique, verifiable file digests.
+
 ## 1.0.1 - 2026-07-17
 
 - Publish releases as immutable GitHub releases with verifiable release attestations.
