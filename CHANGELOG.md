@@ -2,6 +2,10 @@
 
 All notable changes to XHS Longform Exporter are documented here.
 
+## 1.0.1 - 2026-07-17
+
+- Publish releases as immutable GitHub releases with verifiable release attestations.
+
 ## 1.0.0 - 2026-07-17
 
 - Export Markdown notes as paginated 1080×1440 PNG cards.
