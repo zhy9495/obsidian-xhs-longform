@@ -131,6 +131,5 @@ files.
 4. Push a tag that exactly matches the version, for example `1.0.0` (without a
    `v` prefix).
 
-The release workflow builds and tests the plugin, generates and verifies
-Sigstore build provenance for every asset, and creates a draft GitHub release
-containing `main.js`, `manifest.json`, and `styles.css`.
+The release workflow builds and tests the plugin and creates a draft GitHub
+release containing `main.js`, `manifest.json`, and `styles.css`.

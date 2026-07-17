@@ -2,6 +2,11 @@
 
 All notable changes to XHS Longform Exporter are documented here.
 
+## 1.1.2 - 2026-07-17
+
+- Publish without release attestations as a temporary compatibility workaround for the Obsidian Community scanner.
+- Keep the smaller on-demand font package and SHA-256 font verification unchanged.
+
 ## 1.1.1 - 2026-07-17
 
 - Generate standard Sigstore build-provenance attestations for every release asset.

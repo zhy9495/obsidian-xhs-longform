@@ -1,7 +1,7 @@
 {
   "id": "xhs-longform",
   "name": "XHS Longform Exporter",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "minAppVersion": "1.6.6",
   "description": "Export Markdown notes as paginated Xiaohongshu image cards with live preview and customizable typography.",
   "author": "Ying",

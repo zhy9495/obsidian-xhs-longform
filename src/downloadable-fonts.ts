@@ -6,7 +6,7 @@ export type DownloadableFontDefinition = FontDefinition & {
   sha256: string;
 };
 
-const FONT_ASSET_BASE = "https://raw.githubusercontent.com/zhy9495/obsidian-xhs-longform/1.1.1/assets/fonts";
+const FONT_ASSET_BASE = "https://raw.githubusercontent.com/zhy9495/obsidian-xhs-longform/1.1.2/assets/fonts";
 
 export const DOWNLOADABLE_HANDWRITING_FONTS: DownloadableFontDefinition[] = [
   {
