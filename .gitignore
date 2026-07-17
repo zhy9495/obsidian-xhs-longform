@@ -1,0 +1,8 @@
+node_modules/
+main.js
+*.map
+tests/browser-smoke.bundle.js
+.DS_Store
+BRIEF.md
+docs/FONT_AUDIT.md
+docs/font-candidates.png

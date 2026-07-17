@@ -1,0 +1,79 @@
+import { GEOMETRY as G } from "./presets";
+import type { Block, ListBlock, Page, TableBlock, TextBlock } from "./types";
+import { LayoutMeasurer } from "./measure";
+
+const isFlow = (block: Block): block is TextBlock | ListBlock =>
+  block.type === "paragraph" || block.type === "quote" || block.type === "code-block" || block.type === "cover-title" || block.type === "list";
+
+export function paginate(blocks: Block[], measurer: LayoutMeasurer): Page[] {
+  const queue = [...blocks];
+  const pages: Page[] = [];
+  let current: Block[] = [];
+  let used = 0;
+
+  const flush = () => {
+    if (current.length) pages.push({ blocks: current });
+    current = []; used = 0;
+  };
+
+  while (queue.length) {
+    const block = queue.shift()!;
+    if (block.type === "spacer" && current.length === 0) continue;
+
+    const height = measurer.measure(block);
+    const remaining = G.contentHeight - used;
+
+    if (block.type === "subtitle") {
+      const next = queue.find((item) => item.type !== "spacer");
+      const keepWithNext = next ? measurer.minimumHeight(next) : 0;
+      if (current.length && height + keepWithNext > remaining) { flush(); queue.unshift(block); continue; }
+    }
+
+    if (height <= remaining + 0.01) { current.push(block); used += height; continue; }
+
+    if (block.type === "table" && height > G.contentHeight) {
+      const [before, after] = splitTable(block, remaining, measurer);
+      if (before) { current.push(before); used += measurer.measure(before); }
+      if (after) queue.unshift(after);
+      flush();
+      continue;
+    }
+
+    if (isFlow(block)) {
+      const [before, after] = measurer.splitToHeight(block, remaining);
+      if (before) { current.push(before); used += measurer.measure(before); }
+      if (after) queue.unshift(after);
+      if (!before && current.length === 0) {
+        // A pathological single line taller than the canvas must still make progress.
+        current.push(block);
+      }
+      flush();
+      continue;
+    }
+
+    if (current.length) { flush(); queue.unshift(block); continue; }
+    current.push(block); flush();
+  }
+  flush();
+  return pages.length ? pages : [{ blocks: [] }];
+}
+
+function splitTable(table: TableBlock, available: number, measurer: LayoutMeasurer): [TableBlock | null, TableBlock | null] {
+  let accepted = 0;
+  for (let count = 1; count <= table.rows.length; count++) {
+    const candidate: TableBlock = { ...table, rows: table.rows.slice(0, count) };
+    if (measurer.measure(candidate) <= available + 0.01) accepted = count;
+    else break;
+  }
+  if (accepted === 0) {
+    // An individual row can theoretically exceed a full page. Row-level splitting
+    // is the promised granularity, so keep the row intact and guarantee progress.
+    if (available >= G.contentHeight - 0.01 && table.rows.length) {
+      return [{ ...table, rows: table.rows.slice(0, 1) }, table.rows.length > 1 ? { ...table, rows: table.rows.slice(1) } : null];
+    }
+    return [null, table];
+  }
+  const before: TableBlock = { ...table, rows: table.rows.slice(0, accepted) };
+  const remaining = table.rows.slice(accepted);
+  return [before, remaining.length ? { ...table, rows: remaining } : null];
+}

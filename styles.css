@@ -1,0 +1,10 @@
+.xhs-export-modal { width: min(92vw, 1120px); }
+.xhs-export-controls { display: grid; grid-template-columns: repeat(2, minmax(220px, 1fr)); gap: 10px 20px; }
+.xhs-export-actions { display: flex; align-items: center; gap: 10px; margin: 18px 0 12px; }
+.xhs-export-progress { color: var(--text-muted); }
+.xhs-preview-strip { display: flex; gap: 16px; overflow-x: auto; padding: 10px 2px 18px; min-height: 380px; }
+.xhs-preview-frame { flex: 0 0 270px; width: 270px; height: 360px; border: 1px solid var(--background-modifier-border); border-radius: 6px; overflow: hidden; background: var(--background-secondary); }
+.xhs-preview-frame iframe { width: 1080px; height: 1440px; border: 0; transform: scale(.25); transform-origin: top left; pointer-events: none; }
+.xhs-setting-warning { color: var(--text-warning); font-size: var(--font-ui-smaller); }
+.xhs-font-file-input { max-width: 260px; }
+@media (max-width: 700px) { .xhs-export-controls { grid-template-columns: 1fr; } }
