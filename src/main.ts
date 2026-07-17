@@ -6,6 +6,8 @@ import { FontAssetCache } from "./font-cache";
 import { fontFormatForFilename } from "./font-formats";
 import { ExportModal } from "./modal";
 import { ensureVaultFolder } from "./vault-utils";
+import { prepareAvatar, prepareCoverImage } from "./avatar";
+import { limitAuthorSubtitle } from "./cover";
 
 export default class XhsLongformPlugin extends Plugin {
   settings: XhsLongformSettings = { ...DEFAULT_SETTINGS };
@@ -44,7 +46,17 @@ export default class XhsLongformPlugin extends Plugin {
     const saved: unknown = await this.loadData();
     this.settings = { ...DEFAULT_SETTINGS };
     if (saved && typeof saved === "object") Object.assign(this.settings, saved);
+    if (saved && typeof saved === "object" && !("showCoverImage" in saved)) this.settings.showCoverImage = Boolean(this.settings.coverImageDataUrl);
+    if (saved && typeof saved === "object" && !("showAvatar" in saved)) {
+      const legacyMode = "coverMode" in saved ? saved.coverMode : "title-body";
+      this.settings.showAvatar = legacyMode !== "title-body";
+    }
+    if (saved && typeof saved === "object" && !("showTitle" in saved)) {
+      const legacyMode = "coverMode" in saved ? saved.coverMode : "title-body";
+      this.settings.showTitle = legacyMode !== "avatar-body";
+    }
     if (!Array.isArray(this.settings.customFonts)) this.settings.customFonts = [];
+    this.settings.authorSubtitle = limitAuthorSubtitle(this.settings.authorSubtitle || "");
   }
   async saveSettings(): Promise<void> { await this.saveData(this.settings); }
 
@@ -100,5 +112,28 @@ export default class XhsLongformPlugin extends Plugin {
     if (this.settings.fontId === id) this.settings.fontId = fallbackHandwritingFontId(this.fonts);
     await this.saveSettings();
     await this.reloadFonts();
+  }
+
+  async importAvatar(file: File): Promise<void> {
+    this.settings.avatarDataUrl = await prepareAvatar(file);
+    await this.saveSettings();
+  }
+
+  async removeAvatar(): Promise<void> {
+    this.settings.avatarDataUrl = "";
+    this.settings.showAvatar = false;
+    await this.saveSettings();
+  }
+
+  async importCoverImage(file: File): Promise<void> {
+    this.settings.coverImageDataUrl = await prepareCoverImage(file);
+    this.settings.showCoverImage = true;
+    await this.saveSettings();
+  }
+
+  async removeCoverImage(): Promise<void> {
+    this.settings.coverImageDataUrl = "";
+    this.settings.showCoverImage = false;
+    await this.saveSettings();
   }
 }

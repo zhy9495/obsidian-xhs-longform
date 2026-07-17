@@ -1,6 +1,9 @@
 export type StyleId = "pingfang" | "handwrite";
 export type TextureId = "auto" | "none" | "grid" | "dot" | "line";
 export type SizeScale = "80" | "90" | "100" | "110";
+export type PageMargin = "64" | "76" | "88" | "100" | "112";
+export type CoverMode = "avatar-body" | "avatar-title-body" | "title-body";
+export type AvatarSize = "small" | "medium" | "large";
 
 export type Inline =
   | { type: "text"; text: string }
@@ -31,7 +34,8 @@ export type TableBlock = {
 export type ImageBlock = { type: "image"; link: string; alt: string; dataUri?: string };
 export type ImagePairBlock = { type: "image-pair"; images: [ImageBlock, ImageBlock] };
 export type SpacerBlock = { type: "spacer" };
-export type Block = TextBlock | ListBlock | TableBlock | ImageBlock | ImagePairBlock | SpacerBlock;
+export type AuthorBlock = { type: "author"; nickname: string; subtitle: string; showText: boolean; avatarDataUrl: string };
+export type Block = TextBlock | ListBlock | TableBlock | ImageBlock | ImagePairBlock | SpacerBlock | AuthorBlock;
 
 export type Page = { blocks: Block[] };
 
@@ -44,4 +48,13 @@ export type ExportOptions = {
   titleScale: SizeScale;
   subtitleScale: SizeScale;
   bodyScale: SizeScale;
+  horizontalMargin: PageMargin;
+  topMargin: PageMargin;
+  showAvatar: boolean;
+  showTitle: boolean;
+  avatarDataUrl: string;
+  avatarSize: AvatarSize;
+  authorSubtitle: string;
+  coverImageDataUrl: string;
+  showCoverImage: boolean;
 };

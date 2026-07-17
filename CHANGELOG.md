@@ -2,6 +2,25 @@
 
 All notable changes to XHS Longform Exporter are documented here.
 
+## Unreleased
+
+- Replace the three legacy cover modes with independent cover-image, avatar, and title switches, including automatic migration for existing settings.
+- Add local avatar upload, replacement, deletion, centered cropping, and nickname display on the cover only.
+- Enlarge the cover avatar, nickname, and the spacing before the title or body.
+- Add small, medium, and large avatar-area presets, with medium as the default.
+- Add optional 15-character author subtitles and an avatar-only author layout.
+- Add locally processed full-width cover images with avatars overlapping the image boundary.
+- Group settings into cover and author, visual style, typography and page, and export sections.
+- Show image upload controls only after the corresponding cover or avatar option is selected.
+- Make cover-image layouts avatar-only and move overflowing final lines to the next page with a larger footer safety zone.
+- Keep the bottom account label on cover-image pages even when the author block is avatar-only.
+- Fix title visibility when a top cover image is enabled.
+- Rework the export modal into left-side controls and a right-side live preview.
+- Display actual pixel font sizes in selectors instead of relative size labels.
+- Add adjustable horizontal and top margins and use them in real layout measurement and pagination.
+- Publish a Chinese-first README with cover and handwriting previews.
+- Rewrite the Chinese plugin page around quick start, live-preview controls, cover combinations, use cases, and clearly captioned result images.
+
 ## 1.1.2 - 2026-07-17
 
 - Publish without release attestations as a temporary compatibility workaround for the Obsidian Community scanner.

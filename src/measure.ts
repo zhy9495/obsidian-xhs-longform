@@ -1,4 +1,4 @@
-import { GEOMETRY as G } from "./presets";
+import { firstPageGeometry, GEOMETRY as G, layoutGeometry } from "./presets";
 import type { Block, ExportOptions, ListBlock, TextBlock } from "./types";
 import type { LoadedFont } from "./fonts";
 import { getRenderCss, renderBlock } from "./render";
@@ -8,9 +8,13 @@ export class LayoutMeasurer {
   private iframe: HTMLIFrameElement | null = null;
   private doc: Document | null = null;
   private container: HTMLElement | null = null;
+  contentHeight: number = G.contentHeight;
+  firstPageContentHeight: number = G.contentHeight;
 
   async init(options: ExportOptions, fonts: LoadedFont[]): Promise<void> {
     this.destroy();
+    this.contentHeight = layoutGeometry(options).contentHeight;
+    this.firstPageContentHeight = firstPageGeometry(options).height;
     const iframe = document.body.createEl("iframe");
     iframe.setAttribute("aria-hidden", "true");
     iframe.style.cssText = `position:fixed;left:-20000px;top:0;width:${G.width}px;height:${G.height}px;border:0;opacity:0;pointer-events:none`;
@@ -44,7 +48,7 @@ export class LayoutMeasurer {
 
   minimumHeight(block: Block): number {
     if (block.type === "spacer") return 0;
-    if (block.type === "image" || block.type === "image-pair" || block.type === "table") return this.measure(block);
+    if (block.type === "image" || block.type === "image-pair" || block.type === "table" || block.type === "author") return this.measure(block);
     const element = this.mount(block);
     const root = element.getBoundingClientRect();
     const rects = this.characterRects(element);

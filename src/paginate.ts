@@ -1,4 +1,3 @@
-import { GEOMETRY as G } from "./presets";
 import type { Block, ListBlock, Page, TableBlock, TextBlock } from "./types";
 import { LayoutMeasurer } from "./measure";
 
@@ -20,8 +19,9 @@ export function paginate(blocks: Block[], measurer: LayoutMeasurer): Page[] {
     const block = queue.shift()!;
     if (block.type === "spacer" && current.length === 0) continue;
 
+    const pageCapacity = pages.length === 0 ? measurer.firstPageContentHeight : measurer.contentHeight;
     const height = measurer.measure(block);
-    const remaining = G.contentHeight - used;
+    const remaining = pageCapacity - used;
 
     if (block.type === "subtitle") {
       const next = queue.find((item) => item.type !== "spacer");
@@ -31,8 +31,8 @@ export function paginate(blocks: Block[], measurer: LayoutMeasurer): Page[] {
 
     if (height <= remaining + 0.01) { current.push(block); used += height; continue; }
 
-    if (block.type === "table" && height > G.contentHeight) {
-      const [before, after] = splitTable(block, remaining, measurer);
+    if (block.type === "table" && height > pageCapacity) {
+      const [before, after] = splitTable(block, remaining, pageCapacity, measurer);
       if (before) { current.push(before); used += measurer.measure(before); }
       if (after) queue.unshift(after);
       flush();
@@ -58,7 +58,7 @@ export function paginate(blocks: Block[], measurer: LayoutMeasurer): Page[] {
   return pages.length ? pages : [{ blocks: [] }];
 }
 
-function splitTable(table: TableBlock, available: number, measurer: LayoutMeasurer): [TableBlock | null, TableBlock | null] {
+function splitTable(table: TableBlock, available: number, pageCapacity: number, measurer: LayoutMeasurer): [TableBlock | null, TableBlock | null] {
   let accepted = 0;
   for (let count = 1; count <= table.rows.length; count++) {
     const candidate: TableBlock = { ...table, rows: table.rows.slice(0, count) };
@@ -68,7 +68,7 @@ function splitTable(table: TableBlock, available: number, measurer: LayoutMeasur
   if (accepted === 0) {
     // An individual row can theoretically exceed a full page. Row-level splitting
     // is the promised granularity, so keep the row intact and guarantee progress.
-    if (available >= G.contentHeight - 0.01 && table.rows.length) {
+    if (available >= pageCapacity - 0.01 && table.rows.length) {
       return [{ ...table, rows: table.rows.slice(0, 1) }, table.rows.length > 1 ? { ...table, rows: table.rows.slice(1) } : null];
     }
     return [null, table];

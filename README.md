@@ -1,114 +1,148 @@
 # XHS Longform Exporter
 
-Export an Obsidian Markdown note as a paginated sequence of 1080×1440 PNG
-cards for Xiaohongshu. Pagination uses the browser's real text layout, so
-Chinese lines, images, tables, and custom fonts are measured before page
-breaks are chosen.
+把 Obsidian 里的 Markdown 长文，直接排成适合小红书发布的 3:4 多图。
 
-把 Obsidian Markdown 长文一键导出为小红书 3:4 图片序列。插件在本地完成解析、
-真实字体测量、预览和 PNG 生成，不上传笔记、图片或字体。
+如果你习惯在 Obsidian 写作，但不想再把内容复制到设计软件里逐页排版，这个插件可以帮你完成封面、字体、分页和导出。左边调整设置，右边实时查看成品；确认后一次导出全部 PNG。
 
-![Handwriting preview](docs/preview-handwriting.png)
+插件在本地完成 Markdown 解析、真实字体测量、自动分页和图片生成，不会把笔记、头像、封面图或自定义字体上传到开发者服务器。
 
-## Features
+## 效果展示
 
-- Uses the note filename as the cover title.
-- Renders `#`, `##`, and `###` as three section-heading levels.
-- Supports paragraphs, lists, quotes, tables, local images, bold, italic,
-  highlight, inline code, and links.
-- Keeps text lines and 16:9 images clear of the footer when paginating.
-- Pairs consecutive images into a two-column layout.
-- Provides minimalist and handwriting styles with nine color palettes.
-- Independently scales cover title, section headings, and body text from 80%
-  to 110%, useful for keeping a post under Xiaohongshu's image-count limit.
-- Downloads three OFL-licensed Chinese handwriting fonts on first use, verifies
-  their SHA-256 hashes, and caches them on the current computer.
-- Uses PingFang SC and the six PingFang handwriting fonts already installed on a
-  computer when available, without copying or modifying their files.
-- Imports local TTF, OTF, WOFF, and WOFF2 files without installing them into
-  the operating system.
+### 封面图、头像与标题
 
-## Requirements
+顶部封面图可以铺满画面，头像可叠在图片与底色的分割线上；标题取当前笔记文件名。
 
-- Obsidian 1.6.6 or later.
-- Desktop Obsidian on macOS, Windows, or Linux.
+![封面图、头像、标题与正文的导出效果](docs/preview-avatar-cover.png)
 
-## Installation
+### 手写字体与纸张纹理
 
-### Community plugins
+除了简约黑体，还可以使用本机字体、三款按需下载的 OFL 字体，或者自己导入字体文件。
 
-After the plugin is accepted into the Obsidian Community directory:
+![手写字体与纸张纹理的导出效果](docs/preview-handwriting.png)
 
-1. Open **Settings → Community plugins → Browse**.
-2. Search for **XHS Longform Exporter**.
-3. Select **Install**, then **Enable**.
+## 这是什么
 
-### Manual installation
+用最简单的话说，它可以：
 
-Download `main.js`, `manifest.json`, and `styles.css` from the latest GitHub
-release. Copy them into `<vault>/.obsidian/plugins/xhs-longform/`, reload
-Obsidian, and enable **XHS Longform Exporter** under Community plugins.
+- 把一篇 Obsidian 笔记导出成连续多张 1080×1440 PNG。
+- 根据真实字体和页面空间自动分页，放不下的文字自动进入下一页。
+- 在导出前实时调整封面、头像、标题、字体、字号、配色和边距。
+- 让每一页固定保留昵称与页码，直接形成可以发布的图片序列。
 
-## Usage
+## 快速开始
 
-1. Open a Markdown note.
-2. Run **XHS Longform Exporter: Export current note as Xiaohongshu images**
-   from the command palette, or right-click the note and choose the export
-   command.
-3. Enter an account name and choose style, palette, font, texture, and font
-   sizes.
-4. Select **Preview** to inspect every page.
-5. Select **Export PNG**.
+1. 打开一篇 Markdown 笔记。
+2. 打开命令面板，运行 **导出当前笔记为小红书图片**；也可以右键笔记文件，选择 **导出为小红书图片**。
+3. 在左侧调整设置，在右侧检查实时预览，然后点击 **导出 PNG**。
 
-The default output directory is:
+图片默认保存到：
 
 ```text
-xhs-export/{{title}}/01.png
-xhs-export/{{title}}/02.png
+xhs-export/笔记文件名/01.png
+xhs-export/笔记文件名/02.png
 ```
 
-## Custom fonts
+## 导出面板怎么用
 
-Open **Settings → XHS Longform Exporter → Import custom font** and choose a
-`.ttf`, `.otf`, `.woff`, or `.woff2` file up to 30 MB.
+### 1. 固定信息
 
-The plugin validates the file, copies it to `.xhs-longform/fonts` in the
-current vault, and loads it only for local preview and export. It does not
-install the font into the operating system and does not upload it anywhere.
-Removing an imported font moves its stored file to the vault trash.
+填写底部昵称。它会以 `@昵称` 的形式固定显示在每一页左下角；右下角始终显示当前页码和总页数。
 
-Users are responsible for the license of fonts they import. Importing a font
-locally does not cause that font to be distributed with this plugin.
+### 2. 封面内容
 
-## Fonts and licenses
+封面图、头像和标题是三个独立选项，可以自由组合：
 
-Locally installed PingFang handwriting fonts are optional system fonts. They
-are referenced with CSS `local()` only and are not included, copied, modified,
-or redistributed with this plugin. The same applies to PingFang SC. If
-PingFang SaTuo is installed, it is the preferred default; otherwise the plugin
-offers Xiaolai as the first downloadable font.
+- **封面图：** 打开后才显示上传入口，图片会自动裁切为顶部通栏比例。
+- **头像：** 有封面图时，头像叠在图片与底色之间；没有封面图时，头像和昵称显示在第一页顶部。
+- **标题：** 取当前笔记的文件名；关闭后直接从正文开始。
+- **昵称下方文字：** 仅在“无封面图 + 显示头像”时出现，可填写日期、账号或一句不超过 15 个字的话。
 
-The handwriting style includes **Xiaolai Regular / 小赖字体**, **Naikai Light /
-内海字体**, and **CEF Fonts CJK Regular / 快去写作业 CJK**. All three are
-redistributed under the SIL Open Font License 1.1. They are downloaded from a
-version-pinned path in this repository only when selected, checked against a
-published SHA-256 hash, and cached in IndexedDB outside the vault. Their license
-texts are included in [`assets/fonts`](assets/fonts).
+### 3. 视觉样式
 
-The plugin source code is licensed under MIT. Bundled third-party components
-retain their own licenses; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+选择简约黑体或手写纹理，再选择配色、字体和纸张纹理。手写字体既可以调用本机字体，也可以按需下载开源字体或导入自己的字体文件。
 
-## Privacy
+### 4. 文字与页面
 
-The plugin collects no analytics and never uploads notes, images, or imported
-fonts. It makes one disclosed network request when an OFL font is first used;
-see [PRIVACY.md](PRIVACY.md).
+标题、小标题、正文可以分别选择实际导出字号；左右边距和顶部边距也可以单独调整。文章超过小红书图片数量限制时，可以缩小字号或边距，让每页容纳更多内容。
 
-## Support
+## 主要功能
 
-Report bugs or request features through
-[GitHub Issues](https://github.com/zhy9495/obsidian-xhs-longform/issues). For
-security issues, follow [SECURITY.md](SECURITY.md).
+- 导出 1080×1440 PNG，比例为 3:4。
+- 根据浏览器中的真实字体排版自动分页，避免文字、图片和页脚互相遮挡。
+- 封面图、头像和文件名标题均可独立开关，自由组合。
+- 头像支持上传、更换和删除；上传后会自动居中裁切、压缩，只在第一页显示。
+- 头像区域提供小、中、大三档，联动调整头像、昵称和周围间距，默认使用中档。
+- 支持上传顶部通栏封面图；头像会叠在封面图与下方底色的交界线上。
+- 不使用顶部封面图时，昵称显示在头像右侧，昵称下方可以选填不超过 15 个字的日期、账号或自定义文字。
+- 顶部封面图与头像同时启用时，头像旁不显示昵称和简介，但每页底部仍保留 `@昵称`。
+- 只有打开顶部封面图或头像开关后，对应的上传控件才会出现。
+- 默认使用笔记文件名作为封面标题；关闭标题后，正文直接接在头像区域之后。
+- Markdown 中的 `#`、`##`、`###` 分别渲染为三级章节标题。
+- 分别选择封面标题、章节标题和正文的实际导出字号。
+- 分别调整左右边距与顶部边距；内容过长时，可以配合缩小字号来减少导出张数。
+- 支持段落、列表、引用、表格、本地图片、粗体、斜体、高亮、行内代码和链接文字。
+- 连续两张图片自动组成双栏版式。
+- 提供简约黑体、手写纹理和九组配色。
+- 支持本机 PingFang SC、平方手写字体，以及用户自行导入的 TTF、OTF、WOFF、WOFF2 字体。
+- 三款 OFL 手写字体按需下载并校验 SHA-256，不打进插件安装包。
+
+## 适合谁用
+
+- 在 Obsidian 写长文，想直接发布到小红书的人。
+- 不想把文章复制到 Canva、Figma 或其他排版工具逐页处理的人。
+- 需要统一封面、头像、昵称、页码和品牌风格的内容创作者。
+- 希望在本地完成排版，不上传笔记内容的人。
+
+## 安装
+
+### Obsidian 官方插件市场
+
+插件被 Obsidian Community Plugins 收录后：
+
+1. 打开 **设置 → 第三方插件 → 浏览**。
+2. 搜索 **XHS Longform Exporter**。
+3. 点击 **安装**，然后点击 **启用**。
+
+### 手动安装
+
+从最新 GitHub Release 下载 `main.js`、`manifest.json` 和 `styles.css`，放入：
+
+```text
+<你的仓库>/.obsidian/plugins/xhs-longform/
+```
+
+重新加载 Obsidian，然后在第三方插件中启用 **XHS Longform Exporter**。
+
+## 封面逻辑
+
+顶部封面图、头像和标题是三个独立选项。标题始终取当前笔记的文件名；关闭标题后，第一页直接从正文开始。
+
+- 有顶部封面图时：头像可选；启用后叠在封面图与底色的交界线上，并且只显示头像本身。标题可独立显示或隐藏。
+- 无顶部封面图时：头像可选；启用后固定显示头像和昵称，还可以选填不超过 15 个字的昵称下方文字。标题同样可以独立显示或隐藏。
+- 每一页底部始终显示 `@昵称` 和页码，不受以上选项影响。
+
+删除头像或封面图后，对应开关会自动关闭，避免下一次导出时出现缺少图片的错误。
+
+## 字体
+
+插件优先使用当前电脑已经安装的字体，不会复制、修改或重新分发本机字体。macOS 自带的 `PingFang SC / 苹方-简` 会用于简约黑体排版，也可以在字体列表中直接调用；已经安装的平方手写字体同样可以使用。
+
+在 **设置 → XHS Longform Exporter → 导入自定义字体** 中，可以选择不超过 30 MB 的 `.ttf`、`.otf`、`.woff` 或 `.woff2` 文件。插件会验证字体，并保存到当前 vault 的 `.xhs-longform/fonts`；它不会把字体安装进操作系统，也不会上传到网络。用户需要自行确认所导入字体的使用授权。
+
+小赖字体、内海字体和快去写作业 CJK 使用 SIL Open Font License 1.1。它们只在首次选择时从本仓库的固定版本路径下载，校验哈希后缓存到当前电脑，不会通过 Obsidian Sync 同步。完整授权与第三方说明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+
+## 隐私
+
+插件不收集分析数据，不上传笔记、图片、封面图、头像或自定义字体。只有在首次使用内置 OFL 字体时，才会发起说明过的字体下载请求。详情见 [PRIVACY.md](PRIVACY.md)。
+
+## 兼容性
+
+- Obsidian 1.6.6 或更新版本
+- macOS、Windows、Linux 桌面版 Obsidian
+
+## 问题反馈
+
+请通过 [GitHub Issues](https://github.com/zhy9495/obsidian-xhs-longform/issues) 提交问题或建议。安全问题请参照 [SECURITY.md](SECURITY.md)。
 
 ## Development
 
@@ -119,17 +153,11 @@ npm test
 npm run build
 ```
 
-The production build outputs `main.js`. Downloadable WOFF2 files are not
-embedded in it, so a release only needs the three standard Obsidian plugin
-files.
+Production builds output `main.js`. The downloadable WOFF2 fonts are not embedded in the release package, so an Obsidian release only needs `main.js`, `manifest.json`, and `styles.css`.
 
-## Releasing
+## Release checklist
 
 1. Keep the version identical in `manifest.json` and `package.json`.
 2. Add the version-to-minimum-Obsidian mapping to `versions.json`.
 3. Run `npm run validate-release`.
-4. Push a tag that exactly matches the version, for example `1.0.0` (without a
-   `v` prefix).
-
-The release workflow builds and tests the plugin and creates a draft GitHub
-release containing `main.js`, `manifest.json`, and `styles.css`.
+4. Push a tag that exactly matches the version, for example `1.2.0` without a `v` prefix.
