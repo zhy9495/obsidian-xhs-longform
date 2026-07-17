@@ -1,6 +1,7 @@
 import { App, TFile, normalizePath } from "obsidian";
 import { DOWNLOADABLE_HANDWRITING_FONTS, type DownloadableFontDefinition } from "./downloadable-fonts";
 import type { FontAssetCache } from "./font-cache";
+import { fontWidthsDiffer } from "./font-detection";
 
 export type FontSource = "system" | "downloadable" | "custom";
 export type FontDefinition = {
@@ -64,14 +65,27 @@ export function loadedDownloadableFont(font: DownloadableFontDefinition, url: st
 }
 
 async function loadSystemFont(font: FontDefinition & { localNames: string[] }): Promise<LoadedFont> {
-  const source = font.localNames.map((name) => `local("${name}")`).join(",");
-  const faceCss = `@font-face{font-family:"${font.family}";src:${source};font-style:normal;font-display:block;}`;
-  try {
-    await new FontFace(font.family, source).load();
-    return { ...font, available: true, faceCss };
-  } catch {
-    return { ...font, available: false, faceCss: "" };
-  }
+  const family = font.localNames.find(systemFontAvailable);
+  return family
+    ? { ...font, family, available: true, faceCss: "" }
+    : { ...font, available: false, faceCss: "" };
+}
+
+const FONT_TEST_TEXT = "mmmmmmmmmmWW@#苹方简体字体测试0123456789";
+const FONT_TEST_FALLBACKS = ["monospace", "serif", "sans-serif"] as const;
+
+function systemFontAvailable(family: string): boolean {
+  const canvas = document.body.createEl("canvas");
+  canvas.remove();
+  const context = canvas.getContext("2d");
+  if (!context) return false;
+  const measure = (stack: string): number => {
+    context.font = `72px ${stack}`;
+    return context.measureText(FONT_TEST_TEXT).width;
+  };
+  const fallbackWidths = FONT_TEST_FALLBACKS.map((fallback) => measure(fallback));
+  const candidateWidths = FONT_TEST_FALLBACKS.map((fallback) => measure(`"${family.replaceAll('"', '\\"')}",${fallback}`));
+  return fontWidthsDiffer(fallbackWidths, candidateWidths);
 }
 
 function fontFaceCss(family: string, url: string, format: FontFormat): string {

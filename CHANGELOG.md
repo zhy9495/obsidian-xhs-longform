@@ -2,6 +2,11 @@
 
 All notable changes to XHS Longform Exporter are documented here.
 
+## 1.2.1 - 2026-07-18
+
+- Fix false "not installed" results for macOS system fonts such as PingFang SC by measuring the real browser font output instead of loading `local()` through `FontFace`.
+- Render detected system fonts through their actual installed family names.
+
 ## 1.2.0 - 2026-07-18
 
 - Replace the three legacy cover modes with independent cover-image, avatar, and title switches, including automatic migration for existing settings.
