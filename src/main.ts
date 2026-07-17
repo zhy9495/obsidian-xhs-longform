@@ -1,6 +1,8 @@
 import { Menu, Plugin, TFile, normalizePath } from "obsidian";
 import { DEFAULT_SETTINGS, XhsLongformSettingTab, type XhsLongformSettings } from "./settings";
-import { CUSTOM_FONT_DIR, fallbackHandwritingFontId, loadHandwritingFonts, type CustomFontConfig, type LoadedFont } from "./fonts";
+import { CUSTOM_FONT_DIR, fallbackHandwritingFontId, loadedDownloadableFont, loadHandwritingFonts, type CustomFontConfig, type LoadedFont } from "./fonts";
+import { downloadableFontById } from "./downloadable-fonts";
+import { FontAssetCache } from "./font-cache";
 import { fontFormatForFilename } from "./font-formats";
 import { ExportModal } from "./modal";
 import { ensureVaultFolder } from "./vault-utils";
@@ -8,11 +10,14 @@ import { ensureVaultFolder } from "./vault-utils";
 export default class XhsLongformPlugin extends Plugin {
   settings: XhsLongformSettings = { ...DEFAULT_SETTINGS };
   fonts: LoadedFont[] = [];
+  private fontCache = new FontAssetCache();
+  private fontDownloads = new Map<string, Promise<void>>();
 
   async onload(): Promise<void> {
     await this.loadSettings();
     await this.reloadFonts();
-    if (!this.fonts.some((font) => font.id === this.settings.fontId && font.available)) {
+    const selectedFont = this.fonts.find((font) => font.id === this.settings.fontId);
+    if (!selectedFont || (!selectedFont.available && selectedFont.source !== "downloadable")) {
       this.settings.fontId = fallbackHandwritingFontId(this.fonts);
       await this.saveSettings();
     }
@@ -33,6 +38,8 @@ export default class XhsLongformPlugin extends Plugin {
     this.addSettingTab(new XhsLongformSettingTab(this.app, this));
   }
 
+  onunload(): void { this.fontCache.dispose(); }
+
   async loadSettings(): Promise<void> {
     const saved: unknown = await this.loadData();
     this.settings = { ...DEFAULT_SETTINGS };
@@ -42,7 +49,26 @@ export default class XhsLongformPlugin extends Plugin {
   async saveSettings(): Promise<void> { await this.saveData(this.settings); }
 
   async reloadFonts(): Promise<void> {
-    this.fonts = await loadHandwritingFonts(this.app, this.settings.customFonts);
+    this.fonts = await loadHandwritingFonts(this.app, this.settings.customFonts, this.fontCache);
+  }
+
+  async ensureFontAvailable(id: string): Promise<void> {
+    if (this.fonts.find((font) => font.id === id)?.available) return;
+    const existing = this.fontDownloads.get(id);
+    if (existing) return existing;
+    const definition = downloadableFontById(id);
+    if (!definition) throw new Error("所选字体在本机不可用");
+    const download = this.fontCache.download(definition).then((url) => {
+      const loaded = loadedDownloadableFont(definition, url);
+      this.fonts = this.fonts.map((font) => font.id === id ? loaded : font);
+    }).finally(() => { this.fontDownloads.delete(id); });
+    this.fontDownloads.set(id, download);
+    return download;
+  }
+
+  async clearDownloadedFonts(): Promise<void> {
+    await this.fontCache.clear();
+    await this.reloadFonts();
   }
 
   async importCustomFont(file: File): Promise<void> {

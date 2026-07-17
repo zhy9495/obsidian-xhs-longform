@@ -11,7 +11,6 @@ const context = await esbuild.context({
   target: "es2022",
   platform: "browser",
   outfile: "main.js",
-  loader: { ".woff2": "dataurl" },
   banner: { js: `/* XHS Longform Exporter ${manifest.version} */` },
   sourcemap: production ? false : "inline",
   minify: production,

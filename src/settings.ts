@@ -37,11 +37,18 @@ export class XhsLongformSettingTab extends PluginSettingTab {
       for (const palette of PALETTES.filter((item) => item.style === this.plugin.settings.style)) dropdown.addOption(palette.id, palette.name);
       return dropdown.setValue(this.plugin.settings.paletteId).onChange(async (value) => { this.plugin.settings.paletteId = value; await this.plugin.saveSettings(); });
     });
-    new Setting(containerEl).setName("手写字体").setDesc("优先调用本机平方字体；另有三款内置开源字体，也可以在下方导入字体文件。").setDisabled(this.plugin.settings.style !== "handwrite").addDropdown((dropdown) => {
-      for (const font of this.plugin.fonts) dropdown.addOption(font.id, font.available ? font.name : `${font.name}（文件缺失）`);
-      for (const option of Array.from(dropdown.selectEl.options)) option.disabled = !this.plugin.fonts.find((font) => font.id === option.value)?.available;
+    new Setting(containerEl).setName("手写字体").setDesc("优先调用本机字体；三款开源字体会在首次使用时下载，也可以在下方导入字体文件。").setDisabled(this.plugin.settings.style !== "handwrite").addDropdown((dropdown) => {
+      for (const font of this.plugin.fonts) dropdown.addOption(font.id, this.fontLabel(font));
+      for (const option of Array.from(dropdown.selectEl.options)) {
+        const font = this.plugin.fonts.find((item) => item.id === option.value);
+        option.disabled = Boolean(font && !font.available && font.source !== "downloadable");
+      }
       return dropdown.setValue(this.plugin.settings.fontId).onChange(async (value) => { this.plugin.settings.fontId = value; await this.plugin.saveSettings(); });
     });
+    new Setting(containerEl).setName("下载字体缓存").setDesc("开源字体只缓存在当前电脑的应用数据中，不写入 vault，也不会通过 Obsidian Sync 同步。").addButton((button) => button.setButtonText("清除缓存").onClick(async () => {
+      try { await this.plugin.clearDownloadedFonts(); new Notice("已清除下载字体缓存"); this.display(); }
+      catch (error) { new Notice(`清除失败：${error instanceof Error ? error.message : String(error)}`); }
+    }));
     this.renderCustomFontSettings(containerEl);
     new Setting(containerEl).setName("纹理").setDisabled(this.plugin.settings.style !== "handwrite").addDropdown((dropdown) => dropdown
       .addOption("auto", "跟随配色推荐").addOption("none", "无纹理").addOption("grid", "格子纸").addOption("dot", "圆点纸").addOption("line", "横线纸")
@@ -50,6 +57,11 @@ export class XhsLongformSettingTab extends PluginSettingTab {
     this.addSizeSetting(containerEl, "小标题字号", "正文中 # 标题的基准字号；## 与 ### 会依次缩小。", this.plugin.settings.subtitleScale, async (value) => { this.plugin.settings.subtitleScale = value; await this.plugin.saveSettings(); });
     this.addSizeSetting(containerEl, "正文字号", "同时影响正文、列表、引用和表格。", this.plugin.settings.bodyScale, async (value) => { this.plugin.settings.bodyScale = value; await this.plugin.saveSettings(); });
     new Setting(containerEl).setName("导出目录").setDesc("{{title}} 会替换为当前笔记名。").addText((text) => text.setValue(this.plugin.settings.outputDir).onChange(async (value) => { this.plugin.settings.outputDir = value || DEFAULT_SETTINGS.outputDir; await this.plugin.saveSettings(); }));
+  }
+
+  private fontLabel(font: XhsLongformPlugin["fonts"][number]): string {
+    if (font.available) return font.name;
+    return font.source === "downloadable" ? `${font.name}（首次使用时下载）` : `${font.name}（未安装）`;
   }
 
   private addSizeSetting(container: HTMLElement, name: string, description: string, value: SizeScale, onChange: (value: SizeScale) => Promise<void>): void {

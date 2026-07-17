@@ -1,7 +1,8 @@
 import { App, TFile, normalizePath } from "obsidian";
-import { BUNDLED_HANDWRITING_FONTS } from "./bundled-fonts";
+import { DOWNLOADABLE_HANDWRITING_FONTS, type DownloadableFontDefinition } from "./downloadable-fonts";
+import type { FontAssetCache } from "./font-cache";
 
-export type FontSource = "system" | "bundled" | "custom";
+export type FontSource = "system" | "downloadable" | "custom";
 export type FontDefinition = {
   id: string;
   name: string;
@@ -21,8 +22,9 @@ export type CustomFontConfig = {
 export const DEFAULT_HANDWRITING_FONT_ID = "sat-to";
 export const CUSTOM_FONT_DIR = ".xhs-longform/fonts";
 
-export async function loadHandwritingFonts(app: App, customFonts: CustomFontConfig[]): Promise<LoadedFont[]> {
+export async function loadHandwritingFonts(app: App, customFonts: CustomFontConfig[], cache: FontAssetCache): Promise<LoadedFont[]> {
   const system = await Promise.all(SYSTEM_HANDWRITING_FONTS.map(loadSystemFont));
+  const downloadable = await Promise.all(DOWNLOADABLE_HANDWRITING_FONTS.map((font) => loadCachedFont(font, cache)));
   const custom = await Promise.all(customFonts.map(async (font): Promise<LoadedFont> => {
     const family = `XhsCustom${font.id.replace(/[^a-zA-Z0-9]/g, "")}`;
     const file = app.vault.getAbstractFileByPath(normalizePath(font.path));
@@ -31,12 +33,13 @@ export async function loadHandwritingFonts(app: App, customFonts: CustomFontConf
     const dataUrl = `data:${mimeFor(font.format)};base64,${bytesToBase64(bytes)}`;
     return { ...font, family, source: "custom", available: true, faceCss: fontFaceCss(family, dataUrl, font.format) };
   }));
-  return [...system, ...BUNDLED_HANDWRITING_FONTS, ...custom];
+  return [...system, ...downloadable, ...custom];
 }
 
 export function fallbackHandwritingFontId(fonts: LoadedFont[]): string {
   return fonts.find((font) => font.id === DEFAULT_HANDWRITING_FONT_ID && font.available)?.id
     ?? fonts.find((font) => font.available)?.id
+    ?? fonts.find((font) => font.source === "downloadable")?.id
     ?? DEFAULT_HANDWRITING_FONT_ID;
 }
 
@@ -46,8 +49,19 @@ const SYSTEM_HANDWRITING_FONTS: Array<FontDefinition & { localNames: string[] }>
   { id: "san-sheng", name: "平方三生体（本机）", family: "XhsPingFangSanSheng", source: "system", format: "truetype", localNames: ["平方三生体", "PingFangSanShengTi"] },
   { id: "shi-guang", name: "平方时光体（本机）", family: "XhsPingFangShiGuang", source: "system", format: "truetype", localNames: ["平方时光体", "PingFangShiGuangTi"] },
   { id: "shang-shang-qian", name: "平方上上谦体（本机）", family: "XhsPingFangShangShangQian", source: "system", format: "truetype", localNames: ["平方上上谦体 Regular", "pingfangshangshangqian", "平方上上谦体", "PING FANG SHAGN SHANG QIAN"] },
-  { id: "qing-chun", name: "平方青春体（本机）", family: "XhsPingFangQingChun", source: "system", format: "truetype", localNames: ["平方青春体 Regular", "-Regular", "平方青春体", "PING FANG QING CHUN"] }
+  { id: "qing-chun", name: "平方青春体（本机）", family: "XhsPingFangQingChun", source: "system", format: "truetype", localNames: ["平方青春体 Regular", "-Regular", "平方青春体", "PING FANG QING CHUN"] },
+  { id: "pingfang-sc", name: "苹方 PingFang SC（本机）", family: "XhsPingFangSC", source: "system", format: "truetype", localNames: ["PingFang SC", "苹方-简", "苹方 简"] }
 ];
+
+async function loadCachedFont(font: DownloadableFontDefinition, cache: FontAssetCache): Promise<LoadedFont> {
+  try { return loadedDownloadableFont(font, await cache.get(font)); }
+  catch { return loadedDownloadableFont(font, null); }
+}
+
+export function loadedDownloadableFont(font: DownloadableFontDefinition, url: string | null): LoadedFont {
+  const { url: _url, sha256: _sha256, ...definition } = font;
+  return { ...definition, available: Boolean(url), faceCss: url ? fontFaceCss(font.family, url, font.format) : "" };
+}
 
 async function loadSystemFont(font: FontDefinition & { localNames: string[] }): Promise<LoadedFont> {
   const source = font.localNames.map((name) => `local("${name}")`).join(",");

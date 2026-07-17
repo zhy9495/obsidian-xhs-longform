@@ -21,9 +21,10 @@ breaks are chosen.
 - Provides minimalist and handwriting styles with nine color palettes.
 - Independently scales cover title, section headings, and body text from 80%
   to 110%, useful for keeping a post under Xiaohongshu's image-count limit.
-- Includes three OFL-licensed Chinese handwriting fonts on every platform.
-- Uses the six PingFang handwriting fonts already installed on a computer when
-  available, without copying or modifying their files.
+- Downloads three OFL-licensed Chinese handwriting fonts on first use, verifies
+  their SHA-256 hashes, and caches them on the current computer.
+- Uses PingFang SC and the six PingFang handwriting fonts already installed on a
+  computer when available, without copying or modifying their files.
 - Imports local TTF, OTF, WOFF, and WOFF2 files without installing them into
   the operating system.
 
@@ -79,25 +80,29 @@ Removing an imported font moves its stored file to the vault trash.
 Users are responsible for the license of fonts they import. Importing a font
 locally does not cause that font to be distributed with this plugin.
 
-## Bundled fonts and licenses
+## Fonts and licenses
 
 Locally installed PingFang handwriting fonts are optional system fonts. They
 are referenced with CSS `local()` only and are not included, copied, modified,
-or redistributed with this plugin. If PingFang SaTuo is installed, it is the
-preferred default; otherwise the plugin falls back to Xiaolai.
+or redistributed with this plugin. The same applies to PingFang SC. If
+PingFang SaTuo is installed, it is the preferred default; otherwise the plugin
+offers Xiaolai as the first downloadable font.
 
 The handwriting style includes **Xiaolai Regular / 小赖字体**, **Naikai Light /
 内海字体**, and **CEF Fonts CJK Regular / 快去写作业 CJK**. All three are
-redistributed under the SIL Open Font License 1.1. Their license texts are
-included in [`assets/fonts`](assets/fonts).
+redistributed under the SIL Open Font License 1.1. They are downloaded from a
+version-pinned path in this repository only when selected, checked against a
+published SHA-256 hash, and cached in IndexedDB outside the vault. Their license
+texts are included in [`assets/fonts`](assets/fonts).
 
 The plugin source code is licensed under MIT. Bundled third-party components
 retain their own licenses; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ## Privacy
 
-The plugin makes no runtime network requests and collects no analytics. See
-[PRIVACY.md](PRIVACY.md).
+The plugin collects no analytics and never uploads notes, images, or imported
+fonts. It makes one disclosed network request when an OFL font is first used;
+see [PRIVACY.md](PRIVACY.md).
 
 ## Support
 
@@ -114,8 +119,9 @@ npm test
 npm run build
 ```
 
-The production build outputs `main.js`. The bundled WOFF2 fonts are embedded
-as data URLs, so a release only needs the three standard Obsidian plugin files.
+The production build outputs `main.js`. Downloadable WOFF2 files are not
+embedded in it, so a release only needs the three standard Obsidian plugin
+files.
 
 ## Releasing
 
@@ -125,6 +131,5 @@ as data URLs, so a release only needs the three standard Obsidian plugin files.
 4. Push a tag that exactly matches the version, for example `1.0.0` (without a
    `v` prefix).
 
-The release workflow builds and tests the plugin, attests the build, and
-creates a draft GitHub release containing `main.js`, `manifest.json`, and
-`styles.css`.
+The release workflow builds and tests the plugin and creates a draft GitHub
+release containing `main.js`, `manifest.json`, and `styles.css`.

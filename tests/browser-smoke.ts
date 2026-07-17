@@ -5,7 +5,10 @@ import { paginate } from "../src/paginate";
 import { pageDocument } from "../src/render";
 import { GEOMETRY as G } from "../src/presets";
 import type { ExportOptions } from "../src/types";
-import { BUNDLED_HANDWRITING_FONTS } from "../src/bundled-fonts";
+import { DOWNLOADABLE_HANDWRITING_FONTS } from "../src/downloadable-fonts";
+import { loadedDownloadableFont } from "../src/fonts";
+
+const DOWNLOADABLE_TEST_FONTS = DOWNLOADABLE_HANDWRITING_FONTS.map((font) => loadedDownloadableFont(font, null));
 
 // Obsidian adds createEl to HTMLElement. Reproduce that small host API in the
 // standalone Chromium smoke page.
@@ -40,24 +43,24 @@ async function main(): Promise<void> {
     compactMeasurer.destroy();
 
     const handwritingPageCounts: Record<string, number> = {};
-    for (const font of BUNDLED_HANDWRITING_FONTS) {
+    for (const font of DOWNLOADABLE_TEST_FONTS) {
       const fontOptions: ExportOptions = { ...options, style: "handwrite", paletteId: "milk-tea", fontId: font.id };
       const handwritingMeasurer = new LayoutMeasurer();
-      await handwritingMeasurer.init(fontOptions, BUNDLED_HANDWRITING_FONTS);
+      await handwritingMeasurer.init(fontOptions, DOWNLOADABLE_TEST_FONTS);
       handwritingPageCounts[font.id] = paginate(blocks, handwritingMeasurer).length;
       handwritingMeasurer.destroy();
     }
 
     const handwritingOptions: ExportOptions = { ...options, style: "handwrite", paletteId: "milk-tea", fontId: "xiaolai-regular" };
     const previewMeasurer = new LayoutMeasurer();
-    await previewMeasurer.init(handwritingOptions, BUNDLED_HANDWRITING_FONTS);
+    await previewMeasurer.init(handwritingOptions, DOWNLOADABLE_TEST_FONTS);
     const handwritingPages = paginate(blocks, previewMeasurer);
     previewMeasurer.destroy();
 
     const iframe = document.createElement("iframe");
     iframe.style.cssText = `width:${G.width}px;height:${G.height}px;border:0`;
     const loaded = new Promise<void>((resolve) => iframe.addEventListener("load", () => resolve(), { once: true }));
-    iframe.srcdoc = pageDocument(handwritingOptions, BUNDLED_HANDWRITING_FONTS, handwritingPages[0]!, 0, handwritingPages.length);
+    iframe.srcdoc = pageDocument(handwritingOptions, DOWNLOADABLE_TEST_FONTS, handwritingPages[0]!, 0, handwritingPages.length);
     document.body.append(iframe);
     await loaded;
     const card = iframe.contentDocument!.querySelector<HTMLElement>(".xhs-card")!;

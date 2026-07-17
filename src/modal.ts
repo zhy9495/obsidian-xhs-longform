@@ -51,8 +51,11 @@ export class ExportModal extends Modal {
       return dropdown.setValue(this.options.paletteId).onChange((value) => { this.options.paletteId = value; this.invalidate(); });
     });
     new Setting(container).setName("字体").setDisabled(this.options.style !== "handwrite").addDropdown((dropdown) => {
-      for (const font of this.plugin.fonts) dropdown.addOption(font.id, font.available ? font.name : `${font.name}（未安装）`);
-      for (const option of Array.from(dropdown.selectEl.options)) option.disabled = !this.plugin.fonts.find((font) => font.id === option.value)?.available;
+      for (const font of this.plugin.fonts) dropdown.addOption(font.id, font.available ? font.name : font.source === "downloadable" ? `${font.name}（首次使用时下载）` : `${font.name}（未安装）`);
+      for (const option of Array.from(dropdown.selectEl.options)) {
+        const font = this.plugin.fonts.find((item) => item.id === option.value);
+        option.disabled = Boolean(font && !font.available && font.source !== "downloadable");
+      }
       return dropdown.setValue(this.options.fontId).onChange((value) => { this.options.fontId = value; this.invalidate(); });
     });
     new Setting(container).setName("纹理").setDisabled(this.options.style !== "handwrite").addDropdown((dropdown) => dropdown
@@ -74,13 +77,19 @@ export class ExportModal extends Modal {
 
   private validate(): boolean {
     if (!this.options.account.trim()) { new Notice("请先填写账号名"); return false; }
-    if (this.options.style === "handwrite" && !this.plugin.fonts.find((font) => font.id === this.options.fontId)?.available) {
+    const font = this.plugin.fonts.find((item) => item.id === this.options.fontId);
+    if (this.options.style === "handwrite" && (!font || (!font.available && font.source !== "downloadable"))) {
       new Notice("所选手写字体未安装，请换一个字体"); return false;
     }
     return true;
   }
 
   private async buildPages(): Promise<Page[]> {
+    const font = this.plugin.fonts.find((item) => item.id === this.options.fontId);
+    if (this.options.style === "handwrite" && font?.source === "downloadable" && !font.available) {
+      if (this.statusEl) this.statusEl.textContent = `正在下载并校验 ${font.name}…`;
+      await this.plugin.ensureFontAvailable(font.id);
+    }
     const markdown = await this.app.vault.cachedRead(this.file);
     const blocks = await resolveImages(this.app, parseMarkdown(markdown, this.file.basename), this.file.path);
     const measurer = new LayoutMeasurer();

@@ -2,6 +2,13 @@
 
 All notable changes to XHS Longform Exporter are documented here.
 
+## 1.1.0 - 2026-07-17
+
+- Reduce the install package by downloading the three OFL fonts only when first used.
+- Verify downloaded fonts with SHA-256 and cache them outside the vault in IndexedDB.
+- Add PingFang SC as a local system-font option without copying or modifying it.
+- Keep imported fonts and the six locally installed PingFang handwriting fonts unchanged.
+
 ## 1.0.2 - 2026-07-17
 
 - Stamp generated release assets with the current version so each release has unique, verifiable file digests.
