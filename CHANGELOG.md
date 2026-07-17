@@ -2,6 +2,11 @@
 
 All notable changes to XHS Longform Exporter are documented here.
 
+## 1.1.1 - 2026-07-17
+
+- Generate standard Sigstore build-provenance attestations for every release asset.
+- Verify all release attestations with GitHub CLI before creating the release.
+
 ## 1.1.0 - 2026-07-17
 
 - Reduce the install package by downloading the three OFL fonts only when first used.
