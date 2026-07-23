@@ -1,5 +1,5 @@
-import { App, TFile } from "obsidian";
-import type { Block, ImageBlock } from "./types";
+import { App, FileSystemAdapter, TFile } from "obsidian";
+import type { Block, ImageBlock, MotionBlock } from "./types";
 
 export async function resolveImages(app: App, blocks: Block[], sourcePath: string): Promise<Block[]> {
   const cache = new Map<string, string>();
@@ -17,11 +17,31 @@ export async function resolveImages(app: App, blocks: Block[], sourcePath: strin
     cache.set(image.link, dataUri);
     return { ...image, dataUri };
   };
+  const resolveMotion = async (motion: MotionBlock): Promise<MotionBlock> => {
+    const file = resolveFile(app, motion.link, sourcePath);
+    const adapter = app.vault.adapter;
+    if (!(adapter instanceof FileSystemAdapter)) throw new Error("动态素材导出仅支持本地桌面仓库");
+    return {
+      ...motion,
+      resourceUrl: app.vault.getResourcePath(file),
+      filePath: adapter.getFullPath(file.path)
+    };
+  };
   return Promise.all(blocks.map(async (block) => {
     if (block.type === "image") return resolve(block);
     if (block.type === "image-pair") return { ...block, images: [await resolve(block.images[0]), await resolve(block.images[1])] };
+    if (block.type === "motion") return resolveMotion(block);
     return block;
   }));
+}
+
+function resolveFile(app: App, link: string, sourcePath: string): TFile {
+  const rawLink = link.split("#")[0]!.split("?")[0]!;
+  let cleanLink = rawLink;
+  try { cleanLink = decodeURIComponent(rawLink); } catch { /* Keep malformed percent escapes literal. */ }
+  const file = app.metadataCache.getFirstLinkpathDest(cleanLink, sourcePath);
+  if (!(file instanceof TFile)) throw new Error(`找不到素材：${link}`);
+  return file;
 }
 
 function bytesToBase64(bytes: Uint8Array): string {

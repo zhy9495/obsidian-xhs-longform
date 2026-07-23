@@ -33,9 +33,18 @@ export type TableBlock = {
 
 export type ImageBlock = { type: "image"; link: string; alt: string; dataUri?: string };
 export type ImagePairBlock = { type: "image-pair"; images: [ImageBlock, ImageBlock] };
+export type MotionBlock = {
+  type: "motion";
+  id: string;
+  link: string;
+  alt: string;
+  format: "gif" | "mp4" | "mov";
+  resourceUrl?: string;
+  filePath?: string;
+};
 export type SpacerBlock = { type: "spacer" };
 export type AuthorBlock = { type: "author"; nickname: string; subtitle: string; showText: boolean; avatarDataUrl: string };
-export type Block = TextBlock | ListBlock | TableBlock | ImageBlock | ImagePairBlock | SpacerBlock | AuthorBlock;
+export type Block = TextBlock | ListBlock | TableBlock | ImageBlock | ImagePairBlock | MotionBlock | SpacerBlock | AuthorBlock;
 
 export type Page = { blocks: Block[] };
 

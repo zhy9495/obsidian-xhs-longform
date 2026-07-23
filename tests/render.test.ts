@@ -27,7 +27,7 @@ describe("adjustable typography", () => {
     };
     const css = getRenderCss(options, []);
     expect(css).toContain("left:64px;top:76px;width:952px;height:1220px");
-    expect(css).toContain(".xhs-image img{width:952px");
+    expect(css).toContain(".xhs-image img,.xhs-motion img,.xhs-motion video{width:952px");
     expect(css).toContain(".xhs-image-pair img{width:466px");
   });
 

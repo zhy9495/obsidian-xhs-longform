@@ -18,6 +18,9 @@ export function paginate(blocks: Block[], measurer: LayoutMeasurer): Page[] {
   while (queue.length) {
     const block = queue.shift()!;
     if (block.type === "spacer" && current.length === 0) continue;
+    if (block.type === "motion" && current.some((item) => item.type === "motion")) {
+      flush();
+    }
 
     const pageCapacity = pages.length === 0 ? measurer.firstPageContentHeight : measurer.contentHeight;
     const height = measurer.measure(block);

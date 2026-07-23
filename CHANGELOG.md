@@ -2,6 +2,18 @@
 
 All notable changes to XHS Longform Exporter are documented here.
 
+## 1.4.0 - 2026-07-23
+
+- Automatically detect MP4, MOV, and GIF embeds in the current note without asking users to select the media again.
+- Replace separate PNG and Live Photo actions with one automatic mixed-export button.
+- On macOS, when any page contains motion, add the complete page sequence to a new Photos album: dynamic pages as Apple Live Photos and static pages as regular photos.
+- Keep all PNG and JPEG/MOV originals in the selected export folder as a separate backup.
+- Explain the Photos destination before export, show album-import progress, and report both the album name and backup path when finished.
+- Keep the full card design in motion exports and animate only the embedded media region.
+- Keep at most one dynamic asset on each page so every motion page maps to one valid Live Photo.
+- Export static PNG previews plus the original dynamic files on Windows and Linux.
+- Bundle a universal Intel and Apple Silicon Live Photo converter so macOS users do not need Xcode, Swift, or FFmpeg.
+
 ## 1.3.0 - 2026-07-23
 
 - Add a choice between exporting inside the current vault and exporting to any computer folder.

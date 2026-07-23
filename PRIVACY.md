@@ -17,3 +17,13 @@ is not synchronized by Obsidian Sync, and can be cleared in plugin settings.
 No note contents, local images, cover images, avatars, account names, usage data, or imported fonts
 are included in that request. The plugin makes no other runtime network
 requests and collects no analytics.
+
+For motion export, the plugin reads only MP4, MOV, and GIF files explicitly
+embedded in the current note and writes output to the user-selected export
+directory. On macOS, when an export contains at least one motion page, it runs
+the bundled, open-source Live Photo converter from a temporary directory,
+creates a new album in the system Photos application, and imports the complete
+page sequence into that album. Motion pages are imported as JPEG/MOV Live Photo
+pairs and static pages as regular photos. The selected export directory keeps
+the corresponding originals as a local backup. Temporary conversion files are
+deleted after conversion. Videos and generated resources are never uploaded.

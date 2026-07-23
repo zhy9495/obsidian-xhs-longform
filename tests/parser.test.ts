@@ -23,6 +23,16 @@ describe("Markdown subset parser", () => {
     expect(blocks.map((block) => block.type)).toEqual(["image-pair", "image"]);
   });
 
+  it("recognizes embedded MP4, MOV, and GIF files as dynamic blocks without pairing them", () => {
+    const blocks = parseMarkdown("![[clip.mp4]]\n![](second.mov)\n![[loop.gif]]\n![[still.png]]");
+    expect(blocks.map((block) => block.type)).toEqual(["motion", "motion", "motion", "image"]);
+    expect(blocks.slice(0, 3)).toMatchObject([
+      { type: "motion", id: "motion-1", format: "mp4", link: "clip.mp4" },
+      { type: "motion", id: "motion-2", format: "mov", link: "second.mov" },
+      { type: "motion", id: "motion-3", format: "gif", link: "loop.gif" }
+    ]);
+  });
+
   it("parses tables, lists, quotes and merges consecutive blank lines", () => {
     const blocks = parseMarkdown("| A | B |\n|---|---|\n| 1 | 2 |\n\n\n- x\n- y\n\n> q1\n> q2");
     expect(blocks.map((block) => block.type)).toEqual(["table", "spacer", "list", "spacer", "quote"]);

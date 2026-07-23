@@ -54,8 +54,8 @@ export function getRenderCss(options: ExportOptions, fonts: LoadedFont[]): strin
 .xhs-table-wrap{margin:${G.mediaMargin}px 0;width:100%}.xhs-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:${tableSize}px;font-weight:${tableWeight};line-height:${tableLine}}
 .xhs-table th,.xhs-table td{padding:${G.inlinePadding * 2}px ${G.inlinePadding * 3}px;text-align:left;vertical-align:top;border-bottom:${G.textureStroke / 4}px solid ${palette.tableBorder};overflow-wrap:anywhere}
 .xhs-table th{font-weight:${type.tableHead};background:${palette.tableHeadBg};color:${palette.tableHeadText}}.xhs-table tbody tr:nth-child(even){background:${palette.tableZebra}}
-.xhs-image,.xhs-image-pair{margin:${G.mediaMargin}px 0;display:flex;gap:${G.imageGap}px}.xhs-image img{width:${layout.imageWidth}px;height:${G.imageHeight}px}.xhs-image-pair img{width:${layout.pairWidth}px;height:${G.pairHeight}px}
-.xhs-image img,.xhs-image-pair img{display:block;object-fit:cover;object-position:center;border-radius:${G.radius}px}
+.xhs-image,.xhs-image-pair,.xhs-motion{margin:${G.mediaMargin}px 0;display:flex;gap:${G.imageGap}px}.xhs-image img,.xhs-motion img,.xhs-motion video{width:${layout.imageWidth}px;height:${G.imageHeight}px}.xhs-image-pair img{width:${layout.pairWidth}px;height:${G.pairHeight}px}
+.xhs-image img,.xhs-image-pair img,.xhs-motion img,.xhs-motion video{display:block;object-fit:cover;object-position:center;border-radius:${G.radius}px}
 .xhs-spacer{height:${G.spacerHeight}px}
 .xhs-continues-next{margin-bottom:0}
 .xhs-footer{position:absolute;z-index:1;left:${layout.horizontalMargin}px;right:${layout.horizontalMargin}px;bottom:${G.footerBottom}px;height:${G.footerSize}px;font-size:${G.footerSize}px;font-weight:400;line-height:1;color:${palette.text}}
@@ -93,6 +93,28 @@ export function renderBlock(doc: Document, block: Block): HTMLElement {
     const div = doc.createElement("div"); div.className = `xhs-block xhs-${block.type}`;
     const images = block.type === "image" ? [block] : block.images;
     for (const image of images) { const img = doc.createElement("img"); img.src = image.dataUri ?? ""; img.alt = image.alt; div.append(img); }
+    return div;
+  }
+  if (block.type === "motion") {
+    const div = doc.createElement("div");
+    div.className = "xhs-block xhs-motion";
+    div.dataset.motionId = block.id;
+    if (block.format === "gif") {
+      const image = doc.createElement("img");
+      image.src = block.resourceUrl ?? "";
+      image.alt = block.alt;
+      div.append(image);
+    } else {
+      const video = doc.createElement("video");
+      video.src = block.resourceUrl ?? "";
+      video.autoplay = true;
+      video.loop = true;
+      video.muted = true;
+      video.playsInline = true;
+      video.preload = "auto";
+      video.setAttribute("aria-label", block.alt || "动态视频");
+      div.append(video);
+    }
     return div;
   }
   if (block.type === "spacer") { const div = doc.createElement("div"); div.className = "xhs-block xhs-spacer"; return div; }

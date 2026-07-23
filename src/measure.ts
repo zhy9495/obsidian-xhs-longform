@@ -48,7 +48,7 @@ export class LayoutMeasurer {
 
   minimumHeight(block: Block): number {
     if (block.type === "spacer") return 0;
-    if (block.type === "image" || block.type === "image-pair" || block.type === "table" || block.type === "author") return this.measure(block);
+    if (block.type === "image" || block.type === "image-pair" || block.type === "motion" || block.type === "table" || block.type === "author") return this.measure(block);
     const element = this.mount(block);
     const root = element.getBoundingClientRect();
     const rects = this.characterRects(element);

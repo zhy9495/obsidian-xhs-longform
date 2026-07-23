@@ -1,4 +1,4 @@
-import type { Block, ImageBlock, Inline } from "./types";
+import type { Block, ImageBlock, Inline, MotionBlock } from "./types";
 
 const imageWiki = /^!\[\[([^\]|]+)(?:\|([^\]]+))?\]\]$/;
 const imageMarkdown = /^!\[([^\]]*)\]\(([^)]+)\)$/;
@@ -52,17 +52,31 @@ function splitTableRow(line: string): Inline[][] {
   return value.split(/(?<!\\)\|/).map((cell) => parseInline(cell.trim().replace(/\\\|/g, "|")));
 }
 
-function parseImage(line: string): ImageBlock | null {
+type ParsedAttachment =
+  | Omit<ImageBlock, "type"> & { type: "image" }
+  | Omit<MotionBlock, "type" | "id"> & { type: "motion" };
+
+function parseAttachment(line: string): ParsedAttachment | null {
   const wiki = line.trim().match(imageWiki);
-  if (wiki) return { type: "image", link: wiki[1]!.trim(), alt: (wiki[2] ?? wiki[1])!.trim() };
+  if (wiki) return attachmentFor(wiki[1]!.trim(), (wiki[2] ?? wiki[1])!.trim());
   const markdown = line.trim().match(imageMarkdown);
-  if (markdown) return { type: "image", link: markdown[2]!.trim().replace(/^<|>$/g, ""), alt: markdown[1]!.trim() };
+  if (markdown) return attachmentFor(markdown[2]!.trim().replace(/^<|>$/g, ""), markdown[1]!.trim());
   return null;
+}
+
+function attachmentFor(link: string, alt: string): ParsedAttachment {
+  const clean = link.split("#")[0]!.split("?")[0]!;
+  const extension = clean.split(".").at(-1)?.toLowerCase();
+  if (extension === "gif" || extension === "mp4" || extension === "mov") {
+    return { type: "motion", link, alt, format: extension };
+  }
+  return { type: "image", link, alt };
 }
 
 export function parseMarkdown(markdown: string, documentTitle?: string): Block[] {
   const lines = markdown.replace(/\r\n?/g, "\n").split("\n");
   const raw: Block[] = [];
+  let motionIndex = 0;
 
   for (let i = 0; i < lines.length;) {
     const line = lines[i]!;
@@ -82,8 +96,13 @@ export function parseMarkdown(markdown: string, documentTitle?: string): Block[]
       continue;
     }
 
-    const image = parseImage(line);
-    if (image) { raw.push(image); i++; continue; }
+    const attachment = parseAttachment(line);
+    if (attachment) {
+      raw.push(attachment.type === "motion"
+        ? { ...attachment, id: `motion-${++motionIndex}` }
+        : attachment);
+      i++; continue;
+    }
 
     const heading = line.match(/^(#{1,3})\s+(.+)$/);
     if (heading) {
@@ -134,7 +153,7 @@ export function parseMarkdown(markdown: string, documentTitle?: string): Block[]
 function startsBlock(lines: string[], index: number): boolean {
   const line = lines[index]!;
   return /^#{1,3}\s+|^\s*```|^\s*---+\s*$|^>\s?|^\s{0,4}(?:[-*]|\d+\.)\s+/.test(line)
-    || Boolean(parseImage(line))
+    || Boolean(parseAttachment(line))
     || (line.includes("|") && index + 1 < lines.length && tableSeparator.test(lines[index + 1]!));
 }
 

@@ -1,9 +1,9 @@
 {
   "id": "xhs-longform",
   "name": "XHS Longform Exporter",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "minAppVersion": "1.6.6",
-  "description": "Turn Markdown notes into paginated 3:4 Xiaohongshu cards with live preview, cover images, avatars, typography, and automatic layout.",
+  "description": "Turn Markdown notes into paginated Xiaohongshu cards and automatically export embedded media as macOS Live Photos.",
   "author": "Ying",
   "authorUrl": "https://github.com/zhy9495",
   "isDesktopOnly": true

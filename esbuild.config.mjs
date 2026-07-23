@@ -6,7 +6,8 @@ const manifest = JSON.parse(await readFile("manifest.json", "utf8"));
 const context = await esbuild.context({
   entryPoints: ["src/main.ts"],
   bundle: true,
-  external: ["obsidian", "electron", "node:fs/promises", "node:path"],
+  external: ["obsidian", "electron", "node:child_process", "node:fs/promises", "node:os", "node:path"],
+  loader: { ".live-photo-tool": "base64" },
   format: "cjs",
   target: "es2022",
   platform: "browser",

@@ -4,6 +4,7 @@ main.js
 tests/browser-smoke.bundle.js
 prototype/live-photo-macos/build/
 prototype/live-photo-macos/test-output/
+assets/live-photo-build/
 .DS_Store
 BRIEF.md
 docs/FONT_AUDIT.md

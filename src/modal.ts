@@ -1,11 +1,11 @@
-import { App, ButtonComponent, FileSystemAdapter, Modal, Notice, Setting, TFile } from "obsidian";
+import { App, ButtonComponent, FileSystemAdapter, Modal, Notice, Platform, Setting, TFile } from "obsidian";
 import type XhsLongformPlugin from "./main";
 import { AVATAR_SIZES, fontSizeOptions, PAGE_MARGINS, PALETTES, type TypographyRole } from "./presets";
 import { parseMarkdown } from "./parser";
 import { resolveImages } from "./images";
 import { LayoutMeasurer } from "./measure";
 import { paginate } from "./paginate";
-import { exportPages } from "./export";
+import { exportMixedPages } from "./export";
 import { pageDocument } from "./render";
 import type { AvatarSize, ExportOptions, Page, PageMargin, SizeScale, StyleId, TextureId } from "./types";
 import { addCoverAuthor, authorTextVisible, limitAuthorSubtitle } from "./cover";
@@ -46,7 +46,7 @@ export class ExportModal extends Modal {
     this.renderControls(controls);
     const actions = sidebar.createDiv({ cls: "xhs-export-actions" });
     this.previewButton = new ButtonComponent(actions).setButtonText("刷新预览").onClick(() => void this.preview());
-    this.exportButton = new ButtonComponent(actions).setButtonText("导出 PNG").setCta().onClick(() => void this.export());
+    this.exportButton = new ButtonComponent(actions).setButtonText("导出").setCta().onClick(() => void this.export());
     this.openFolderButton = new ButtonComponent(actions).setButtonText("打开文件夹").onClick(() => void this.openLastExportFolder());
     this.openFolderButton.buttonEl.hidden = true;
     this.statusEl = sidebar.createDiv({ cls: "xhs-export-progress", text: "正在生成预览…" });
@@ -149,6 +149,12 @@ export class ExportModal extends Modal {
         }));
       }
     }
+    this.addSection(container, "自动导出");
+    new Setting(container)
+      .setName("动态文件")
+      .setDesc(Platform.isMacOS
+        ? "实况照片仅支持 macOS。只要笔记中含有动态素材，导出后的全部页面都会按顺序加入“照片”App 的新相簿；动态页为实况照片，静态页为普通图片。所选文件夹仍会保留原件备份。"
+        : "插件会读取当前笔记中已经嵌入的动态素材。点击“导出”后保存全部 PNG，并同时导出视频或 GIF 原件。");
   }
 
   private addSection(container: HTMLElement, title: string): void {
@@ -274,11 +280,21 @@ export class ExportModal extends Modal {
       this.pages = await this.buildPages();
       this.previewEl!.empty();
       for (let index = 0; index < this.pages.length; index++) {
-        const frame = this.previewEl!.createDiv({ cls: "xhs-preview-frame" }).createEl("iframe");
+        const page = this.pages[index]!;
+        const wrapper = this.previewEl!.createDiv({ cls: "xhs-preview-frame" });
+        if (page.blocks.some((block) => block.type === "motion")) {
+          wrapper.createDiv({ cls: "xhs-motion-badge", text: Platform.isMacOS ? "实况照片" : "动态素材" });
+        }
+        const frame = wrapper.createEl("iframe");
         frame.srcdoc = pageDocument(this.options, this.plugin.fonts, this.pages[index]!, index, this.pages.length);
         frame.title = `第 ${index + 1} 页预览`;
       }
-      this.statusEl!.textContent = `共 ${this.pages.length} 页`;
+      const motionCount = this.pages.filter((page) => page.blocks.some((block) => block.type === "motion")).length;
+      this.statusEl!.textContent = motionCount === 0
+        ? `共 ${this.pages.length} 页，全部导出为 PNG`
+        : Platform.isMacOS
+          ? `共 ${this.pages.length} 页：${motionCount} 张实况照片、${this.pages.length - motionCount} 张普通图片；全部加入“照片”新相簿`
+          : `共 ${this.pages.length} 页：全部 PNG，另附 ${motionCount} 份动态原件`;
     } catch (error) { this.reportError(error); }
     finally { this.setBusy(false); }
   }
@@ -289,13 +305,25 @@ export class ExportModal extends Modal {
     try {
       if (!this.pages) this.pages = await this.buildPages();
       const destination = await this.resolveExportDestination();
-      await exportPages(this.app, this.pages, this.options, this.plugin.fonts, destination, (current, total) => {
-        if (this.statusEl) this.statusEl.textContent = `正在导出 ${current}/${total}…`;
+      const summary = await exportMixedPages(this.app, this.pages, this.options, this.plugin.fonts, destination, this.file.basename, (current, total, kind) => {
+        if (!this.statusEl) return;
+        if (kind === "photos-import") {
+          this.statusEl.textContent = `正在加入“照片”相簿 ${current}/${total}…`;
+          return;
+        }
+        const label = kind === "live-photo" ? "实况照片" : kind === "motion-original" ? "PNG 与动态原件" : "PNG";
+        this.statusEl.textContent = `正在导出${label} ${current}/${total}…`;
       });
       this.lastExportDirectory = destination.fullPath;
       if (this.openFolderButton) this.openFolderButton.buttonEl.hidden = false;
-      this.statusEl!.textContent = `已导出 ${this.pages.length} 张：${destination.fullPath}`;
-      new Notice(`已导出 ${this.pages.length} 张图片\n保存位置：${destination.fullPath}`, 10000);
+      const details = Platform.isMacOS
+        ? `${summary.livePhotoCount} 张实况照片、${summary.pngCount} 张 PNG`
+        : `${summary.pngCount} 张 PNG、${summary.motionOriginalCount} 份动态原件`;
+      const photosMessage = summary.photosAlbumName ? `\n已加入“照片”相簿：${summary.photosAlbumName}` : "";
+      this.statusEl!.textContent = summary.photosAlbumName
+        ? `已导出 ${details}；“照片”相簿：${summary.photosAlbumName}；原件：${destination.fullPath}`
+        : `已导出 ${details}：${destination.fullPath}`;
+      new Notice(`已导出 ${details}${photosMessage}\n原件位置：${destination.fullPath}`, 15000);
     } catch (error) { this.reportError(error); }
     finally { this.setBusy(false); }
   }

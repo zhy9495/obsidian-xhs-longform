@@ -1,6 +1,6 @@
 {
   "name": "obsidian-xhs-longform",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,6 +8,7 @@
     "build": "tsc --noEmit && node esbuild.config.mjs production",
     "test": "vitest run",
     "lint": "eslint .",
+    "build-live-photo-tool": "zsh scripts/build-live-photo-tool.sh",
     "validate-release": "node scripts/validate-release.mjs"
   },
   "devDependencies": {
