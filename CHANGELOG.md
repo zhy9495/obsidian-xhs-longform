@@ -2,6 +2,13 @@
 
 All notable changes to XHS Longform Exporter are documented here.
 
+## 1.3.0 - 2026-07-23
+
+- Add a choice between exporting inside the current vault and exporting to any computer folder.
+- Open the native desktop folder picker from both plugin settings and the export panel.
+- Show the complete output path after every export and provide an **Open folder** button.
+- Keep each note's images organized in a note-named subfolder when exporting outside the vault.
+
 ## 1.2.1 - 2026-07-18
 
 - Fix false "not installed" results for macOS system fonts such as PingFang SC by measuring the real browser font output instead of loading `local()` through `FontFace`.

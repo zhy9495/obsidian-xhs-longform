@@ -6,7 +6,7 @@ const manifest = JSON.parse(await readFile("manifest.json", "utf8"));
 const context = await esbuild.context({
   entryPoints: ["src/main.ts"],
   bundle: true,
-  external: ["obsidian"],
+  external: ["obsidian", "electron", "node:fs/promises", "node:path"],
   format: "cjs",
   target: "es2022",
   platform: "browser",

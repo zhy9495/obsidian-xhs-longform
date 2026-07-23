@@ -56,6 +56,8 @@ export default class XhsLongformPlugin extends Plugin {
       this.settings.showTitle = legacyMode !== "avatar-body";
     }
     if (!Array.isArray(this.settings.customFonts)) this.settings.customFonts = [];
+    if (this.settings.outputLocationMode !== "computer") this.settings.outputLocationMode = "vault";
+    if (typeof this.settings.computerOutputDir !== "string") this.settings.computerOutputDir = "";
     this.settings.authorSubtitle = limitAuthorSubtitle(this.settings.authorSubtitle || "");
   }
   async saveSettings(): Promise<void> { await this.saveData(this.settings); }

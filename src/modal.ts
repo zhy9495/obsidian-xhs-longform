@@ -1,4 +1,4 @@
-import { App, ButtonComponent, Modal, Notice, Setting, TFile } from "obsidian";
+import { App, ButtonComponent, FileSystemAdapter, Modal, Notice, Setting, TFile } from "obsidian";
 import type XhsLongformPlugin from "./main";
 import { AVATAR_SIZES, fontSizeOptions, PAGE_MARGINS, PALETTES, type TypographyRole } from "./presets";
 import { parseMarkdown } from "./parser";
@@ -9,6 +9,8 @@ import { exportPages } from "./export";
 import { pageDocument } from "./render";
 import type { AvatarSize, ExportOptions, Page, PageMargin, SizeScale, StyleId, TextureId } from "./types";
 import { addCoverAuthor, authorTextVisible, limitAuthorSubtitle } from "./cover";
+import { chooseComputerFolder, openComputerFolder } from "./desktop";
+import { resolveComputerDirectory, resolveVaultDirectory, type ExportDestination, type OutputLocationMode } from "./export-location";
 
 export class ExportModal extends Modal {
   private options: ExportOptions;
@@ -17,6 +19,8 @@ export class ExportModal extends Modal {
   private statusEl: HTMLElement | null = null;
   private previewButton: ButtonComponent | null = null;
   private exportButton: ButtonComponent | null = null;
+  private openFolderButton: ButtonComponent | null = null;
+  private lastExportDirectory = "";
   private busy = false;
   private previewTimer: number | null = null;
 
@@ -43,6 +47,8 @@ export class ExportModal extends Modal {
     const actions = sidebar.createDiv({ cls: "xhs-export-actions" });
     this.previewButton = new ButtonComponent(actions).setButtonText("刷新预览").onClick(() => void this.preview());
     this.exportButton = new ButtonComponent(actions).setButtonText("导出 PNG").setCta().onClick(() => void this.export());
+    this.openFolderButton = new ButtonComponent(actions).setButtonText("打开文件夹").onClick(() => void this.openLastExportFolder());
+    this.openFolderButton.buttonEl.hidden = true;
     this.statusEl = sidebar.createDiv({ cls: "xhs-export-progress", text: "正在生成预览…" });
     const previewPanel = workspace.createDiv({ cls: "xhs-preview-panel" });
     previewPanel.createDiv({ cls: "xhs-preview-heading", text: "实时预览" });
@@ -112,6 +118,37 @@ export class ExportModal extends Modal {
     this.addSizeControl(container, "正文字号", "body", this.options.bodyScale, (value) => { this.options.bodyScale = value; });
     this.addMarginControl(container, "左右边距", this.options.horizontalMargin, (value) => { this.options.horizontalMargin = value; });
     this.addMarginControl(container, "顶部边距", this.options.topMargin, (value) => { this.options.topMargin = value; });
+    this.addSection(container, "导出位置");
+    new Setting(container).setName("保存到").addDropdown((dropdown) => dropdown
+      .addOption("vault", "当前 Obsidian 仓库")
+      .addOption("computer", "电脑文件夹")
+      .setValue(this.plugin.settings.outputLocationMode)
+      .onChange(async (value) => {
+        this.plugin.settings.outputLocationMode = value as OutputLocationMode;
+        await this.plugin.saveSettings();
+        container.empty();
+        this.renderControls(container);
+      }));
+    if (this.plugin.settings.outputLocationMode === "vault") {
+      new Setting(container).setName("仓库内目录").setDesc("{{title}} 会替换为当前笔记名。").addText((text) => text
+        .setValue(this.plugin.settings.outputDir)
+        .onChange(async (value) => {
+          this.plugin.settings.outputDir = value || "xhs-export/{{title}}";
+          await this.plugin.saveSettings();
+        }));
+    } else {
+      const setting = new Setting(container).setName("电脑文件夹")
+        .setDesc(this.plugin.settings.computerOutputDir || "尚未选择；导出时会提示选择。");
+      setting.addButton((button) => button.setButtonText(this.plugin.settings.computerOutputDir ? "更换" : "选择").onClick(async () => {
+        await this.selectComputerOutputFolder(container);
+      }));
+      if (this.plugin.settings.computerOutputDir) {
+        setting.addExtraButton((button) => button.setIcon("folder-open").setTooltip("打开文件夹").onClick(async () => {
+          try { await openComputerFolder(this.plugin.settings.computerOutputDir); }
+          catch (error) { this.reportError(error); }
+        }));
+      }
+    }
   }
 
   private addSection(container: HTMLElement, title: string): void {
@@ -251,19 +288,20 @@ export class ExportModal extends Modal {
     this.setBusy(true, "正在准备…");
     try {
       if (!this.pages) this.pages = await this.buildPages();
-      const title = this.file.basename.replace(/[\\/:*?"<>|]/g, "-");
-      const outputDir = (this.plugin.settings.outputDir || "xhs-export/{{title}}").replaceAll("{{title}}", title);
-      await exportPages(this.app, this.pages, this.options, this.plugin.fonts, outputDir, (current, total) => {
+      const destination = await this.resolveExportDestination();
+      await exportPages(this.app, this.pages, this.options, this.plugin.fonts, destination, (current, total) => {
         if (this.statusEl) this.statusEl.textContent = `正在导出 ${current}/${total}…`;
       });
-      this.statusEl!.textContent = `已导出 ${this.pages.length} 张到 ${outputDir}`;
-      new Notice(`已导出 ${this.pages.length} 张到 ${outputDir}`);
+      this.lastExportDirectory = destination.fullPath;
+      if (this.openFolderButton) this.openFolderButton.buttonEl.hidden = false;
+      this.statusEl!.textContent = `已导出 ${this.pages.length} 张：${destination.fullPath}`;
+      new Notice(`已导出 ${this.pages.length} 张图片\n保存位置：${destination.fullPath}`, 10000);
     } catch (error) { this.reportError(error); }
     finally { this.setBusy(false); }
   }
 
   private setBusy(busy: boolean, status?: string): void {
-    this.busy = busy; this.previewButton?.setDisabled(busy); this.exportButton?.setDisabled(busy);
+    this.busy = busy; this.previewButton?.setDisabled(busy); this.exportButton?.setDisabled(busy); this.openFolderButton?.setDisabled(busy);
     if (status && this.statusEl) this.statusEl.textContent = status;
   }
 
@@ -272,5 +310,42 @@ export class ExportModal extends Modal {
     if (this.statusEl) this.statusEl.textContent = `失败：${message}`;
     new Notice(`xhs-longform：${message}`, 8000);
     console.error("xhs-longform", error);
+  }
+
+  private async selectComputerOutputFolder(container?: HTMLElement): Promise<boolean> {
+    try {
+      const selected = chooseComputerFolder(this.plugin.settings.computerOutputDir);
+      if (!selected) return false;
+      this.plugin.settings.computerOutputDir = selected;
+      await this.plugin.saveSettings();
+      if (container) {
+        container.empty();
+        this.renderControls(container);
+      }
+      return true;
+    } catch (error) {
+      this.reportError(error);
+      return false;
+    }
+  }
+
+  private async resolveExportDestination(): Promise<ExportDestination> {
+    if (this.plugin.settings.outputLocationMode === "computer") {
+      if (!this.plugin.settings.computerOutputDir && !await this.selectComputerOutputFolder()) {
+        throw new Error("尚未选择导出文件夹");
+      }
+      const directory = resolveComputerDirectory(this.plugin.settings.computerOutputDir, this.file.basename);
+      return { kind: "computer", directory, fullPath: directory };
+    }
+    const directory = resolveVaultDirectory(this.plugin.settings.outputDir, this.file.basename);
+    const adapter = this.app.vault.adapter;
+    if (!(adapter instanceof FileSystemAdapter)) throw new Error("当前仓库不支持本地文件导出");
+    return { kind: "vault", directory, fullPath: adapter.getFullPath(directory) };
+  }
+
+  private async openLastExportFolder(): Promise<void> {
+    if (!this.lastExportDirectory) return;
+    try { await openComputerFolder(this.lastExportDirectory); }
+    catch (error) { this.reportError(error); }
   }
 }

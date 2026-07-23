@@ -5,8 +5,8 @@
 .xhs-export-sidebar { min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
 .xhs-export-controls { display: block; min-height: 0; overflow-y: auto; padding-right: 10px; }
 .xhs-export-controls .setting-item { padding: 12px 0; }
-.xhs-export-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 10px; padding: 16px 0 10px; background: var(--background-primary); }
-.xhs-export-progress { color: var(--text-muted); font-size: var(--font-ui-small); padding: 0 0 10px; }
+.xhs-export-actions { display: flex; flex: 0 0 auto; flex-wrap: wrap; align-items: center; gap: 10px; padding: 16px 0 10px; background: var(--background-primary); }
+.xhs-export-progress { color: var(--text-muted); font-size: var(--font-ui-small); line-height: 1.5; overflow-wrap: anywhere; padding: 0 0 10px; }
 .xhs-preview-panel { min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 14px; border: 1px solid var(--background-modifier-border); border-radius: 10px; background: var(--background-secondary); }
 .xhs-preview-heading { flex: 0 0 auto; margin-bottom: 10px; color: var(--text-muted); font-size: var(--font-ui-small); font-weight: var(--font-semibold); }
 .xhs-preview-strip { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 16px; overflow: auto; padding: 2px 2px 18px; min-height: 0; }

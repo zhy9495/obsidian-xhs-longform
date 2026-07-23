@@ -4,6 +4,8 @@ import type { AvatarSize, PageMargin, SizeScale, StyleId, TextureId } from "./ty
 import { AVATAR_SIZES, fontSizeOptions, PAGE_MARGINS, PALETTES, type TypographyRole } from "./presets";
 import { DEFAULT_HANDWRITING_FONT_ID, type CustomFontConfig } from "./fonts";
 import { limitAuthorSubtitle } from "./cover";
+import { chooseComputerFolder, openComputerFolder } from "./desktop";
+import type { OutputLocationMode } from "./export-location";
 
 export type XhsLongformSettings = {
   account: string;
@@ -24,14 +26,17 @@ export type XhsLongformSettings = {
   coverImageDataUrl: string;
   showCoverImage: boolean;
   customFonts: CustomFontConfig[];
+  outputLocationMode: OutputLocationMode;
   outputDir: string;
+  computerOutputDir: string;
 };
 
 export const DEFAULT_SETTINGS: XhsLongformSettings = {
   account: "", style: "pingfang", paletteId: "paper-white", fontId: DEFAULT_HANDWRITING_FONT_ID, texture: "auto",
   titleScale: "100", subtitleScale: "100", bodyScale: "100", horizontalMargin: "88", topMargin: "88",
   showAvatar: false, showTitle: true, avatarDataUrl: "", avatarSize: "medium", authorSubtitle: "",
-  coverImageDataUrl: "", showCoverImage: false, customFonts: [], outputDir: "xhs-export/{{title}}"
+  coverImageDataUrl: "", showCoverImage: false, customFonts: [],
+  outputLocationMode: "vault", outputDir: "xhs-export/{{title}}", computerOutputDir: ""
 };
 
 export class XhsLongformSettingTab extends PluginSettingTab {
@@ -74,7 +79,39 @@ export class XhsLongformSettingTab extends PluginSettingTab {
     this.addMarginSetting(containerEl, "左右边距", "缩小后每行可以容纳更多文字。", this.plugin.settings.horizontalMargin, async (value) => { this.plugin.settings.horizontalMargin = value; await this.plugin.saveSettings(); });
     this.addMarginSetting(containerEl, "顶部边距", "缩小后每页可以容纳更多内容。", this.plugin.settings.topMargin, async (value) => { this.plugin.settings.topMargin = value; await this.plugin.saveSettings(); });
     new Setting(containerEl).setName("导出").setHeading();
-    new Setting(containerEl).setName("导出目录").setDesc("{{title}} 会替换为当前笔记名。").addText((text) => text.setValue(this.plugin.settings.outputDir).onChange(async (value) => { this.plugin.settings.outputDir = value || DEFAULT_SETTINGS.outputDir; await this.plugin.saveSettings(); }));
+    new Setting(containerEl).setName("保存位置").setDesc("可以保存到当前 Obsidian 仓库，也可以选择电脑上的任意文件夹。").addDropdown((dropdown) => dropdown
+      .addOption("vault", "当前 Obsidian 仓库")
+      .addOption("computer", "电脑文件夹")
+      .setValue(this.plugin.settings.outputLocationMode)
+      .onChange(async (value) => {
+        this.plugin.settings.outputLocationMode = value as OutputLocationMode;
+        await this.plugin.saveSettings();
+        this.display();
+      }));
+    if (this.plugin.settings.outputLocationMode === "vault") {
+      new Setting(containerEl).setName("仓库内目录").setDesc("{{title}} 会替换为当前笔记名。").addText((text) => text
+        .setValue(this.plugin.settings.outputDir)
+        .onChange(async (value) => {
+          this.plugin.settings.outputDir = value || DEFAULT_SETTINGS.outputDir;
+          await this.plugin.saveSettings();
+        }));
+    } else {
+      const setting = new Setting(containerEl).setName("电脑文件夹")
+        .setDesc(this.plugin.settings.computerOutputDir || "尚未选择；导出时会在所选文件夹内建立笔记同名子文件夹。");
+      setting.addButton((button) => button.setButtonText(this.plugin.settings.computerOutputDir ? "更换" : "选择").setCta().onClick(async () => {
+        const selected = chooseComputerFolder(this.plugin.settings.computerOutputDir);
+        if (!selected) return;
+        this.plugin.settings.computerOutputDir = selected;
+        await this.plugin.saveSettings();
+        this.display();
+      }));
+      if (this.plugin.settings.computerOutputDir) {
+        setting.addExtraButton((button) => button.setIcon("folder-open").setTooltip("打开文件夹").onClick(async () => {
+          try { await openComputerFolder(this.plugin.settings.computerOutputDir); }
+          catch (error) { new Notice(`无法打开文件夹：${error instanceof Error ? error.message : String(error)}`); }
+        }));
+      }
+    }
   }
 
   private fontLabel(font: XhsLongformPlugin["fonts"][number]): string {
