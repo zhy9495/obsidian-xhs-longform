@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleIdentifier</key>
+  <string>com.ying.xhs-longform-live-photo-prototype</string>
+  <key>CFBundleName</key>
+  <string>XHS Longform Live Photo Prototype</string>
+  <key>CFBundleExecutable</key>
+  <string>xhs-live-photo</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleVersion</key>
+  <string>1</string>
+  <key>CFBundleShortVersionString</key>
+  <string>0.1.0</string>
+  <key>NSPhotoLibraryAddUsageDescription</key>
+  <string>将生成的小红书实况照片保存到系统照片库。</string>
+  <key>NSPhotoLibraryUsageDescription</key>
+  <string>验证生成的实况照片已经被系统照片库正确识别。</string>
+  <key>LSUIElement</key>
+  <true/>
+</dict>
+</plist>
